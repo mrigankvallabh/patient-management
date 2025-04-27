@@ -1,0 +1,34 @@
+[
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Blue Sayama",
+    "email": "blue.sayama@example.com",
+    "address": "112 Mobin St., Crowsand",
+    "dateOfBirth": "1992-09-15",
+    "dateOfRegistration": "2024-11-07"
+  },
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Akane Wilson",
+    "email": "akane.wilson@example.com",
+    "address": "358 Mobin St., Crowsand",
+    "dateOfBirth": "1991-01-05",
+    "dateOfRegistration": "2024-01-17"
+  },
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Nema Tali",
+    "email": "nema.tali@example.com",
+    "address": "1321 Dryer Road, Shervil",
+    "dateOfBirth": "1995-11-18",
+    "dateOfRegistration": "2023-03-18"
+  },
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Ivanka Shrek",
+    "email": "ivanka.s@example.com",
+    "address": "34 Mulberry Av., Bloomington",
+    "dateOfBirth": "1995-05-25",
+    "dateOfRegistration": "2024-08-28"
+  }
+]
