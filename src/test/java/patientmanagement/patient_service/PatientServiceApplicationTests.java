@@ -1,6 +1,7 @@
 package patientmanagement.patient_service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -77,11 +78,56 @@ class PatientServiceApplicationTests {
 				"blue.sayama@example.com",
 				"112 Fletcher St., Allsbury",
 				LocalDate.of(1996, 6, 18),
+				LocalDate.of(2024, 7, 22));
+		var createResponse = restTemplate
+				.postForEntity("/api/v1/patients", newPatientRequest, PatientResponseDTO.class);
+		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		var locationOfNewPatient = createResponse.getHeaders().getLocation();
+		assertThat(locationOfNewPatient)
+				.isNotNull()
+				.hasPath("/api/v1/patients/blue.sayama@example.com");
+
+		var getResponse = restTemplate
+				.getForEntity(locationOfNewPatient, String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+		var blueJson = JsonPath.parse(getResponse.getBody());
+		String id = blueJson.read("$.id");
+		assertThatCode(() -> UUID.fromString(id)).doesNotThrowAnyException();
+		assertThat(id).isNotNull();
+		String email = blueJson.read("$.email");
+		assertThat(email).isEqualTo("blue.sayama@example.com");
+		String dor = blueJson.read("$.dateOfRegistration");
+		assertThat(dor).isEqualTo(LocalDate.of(2024, 7, 22).toString());
+	}
+
+	@Test
+	@DirtiesContext
+	void shouldCreateANewPatientWhenRegistrationDateNotProvided() {
+		var newPatientRequest = new PatientRequestDTO(
+				"Blue Sayama",
+				"blue.sayama@example.com",
+				"112 Fletcher St., Allsbury",
+				LocalDate.of(1996, 6, 18),
 				null);
 		var createResponse = restTemplate
-				.postForEntity("/api/v1/patients", newPatientRequest, Void.class);
+				.postForEntity("/api/v1/patients", newPatientRequest, PatientResponseDTO.class);
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		var locationOfNewPatient = createResponse.getHeaders().getLocation();
+		assertThat(locationOfNewPatient)
+				.isNotNull()
+				.hasPath("/api/v1/patients/blue.sayama@example.com");
 
+		var getResponse = restTemplate
+				.getForEntity(locationOfNewPatient, String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+		var blueJson = JsonPath.parse(getResponse.getBody());
+		String id = blueJson.read("$.id");
+		assertThatCode(() -> UUID.fromString(id)).doesNotThrowAnyException();
+		assertThat(id).isNotNull();
+		String email = blueJson.read("$.email");
+		assertThat(email).isEqualTo("blue.sayama@example.com");
+		String dor = blueJson.read("$.dateOfRegistration");
+		assertThat(dor).isEqualTo(LocalDate.now().toString());
 	}
 
 }
