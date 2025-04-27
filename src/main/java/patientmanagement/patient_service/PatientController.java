@@ -26,26 +26,26 @@ class PatientController {
     }
 
     @GetMapping
-    ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
+    private ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
     @GetMapping("/{email}")
-    ResponseEntity<PatientResponseDTO> getPatientByEmail(@PathVariable String email) {
+    private ResponseEntity<PatientResponseDTO> getPatientByEmail(@PathVariable String email) {
         var patient = patientService.getPatientByEmail(email);
-        if (patient.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        if (patient.isPresent()) {
+            return ResponseEntity.ok(patient.get());
         }
-        return ResponseEntity.ok(patient.get());
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    ResponseEntity<PatientResponseDTO> createPatient(
+    private ResponseEntity<Void> createPatient(
             @RequestBody @Valid PatientRequestDTO patientRequestDTO,
             UriComponentsBuilder ucb) {
         log.info("Creating a new patient with email: {}", patientRequestDTO.email());
         var patient = patientService.createPatient(patientRequestDTO);
         var location = ucb.path("/api/v1/patients/{email}").buildAndExpand(patient.email()).toUri();
-        return ResponseEntity.created(location).body(patient);
+        return ResponseEntity.created(location).build();
     }
 }

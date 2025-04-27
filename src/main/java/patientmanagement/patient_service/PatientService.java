@@ -22,9 +22,7 @@ class PatientService {
     }
 
     Optional<PatientResponseDTO> getPatientByEmail(String email) {
-        return Optional.ofNullable(patientRepository
-                .findByEmail(email)
-                .toResponseDTO());
+        return patientRepository.findByEmail(email).map(Patient::toResponseDTO);
     }
 
     PatientResponseDTO createPatient(PatientRequestDTO patientRequestDTO) {

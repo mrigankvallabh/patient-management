@@ -24,12 +24,9 @@ record PatientRequestDTO(
         @JsonFormat(shape = Shape.STRING, pattern = YYYY_MM_DD) LocalDate dateOfRegistration) {
 
     private static final String YYYY_MM_DD = "yyyy-MM-dd";
-
     PatientRequestDTO {
-
         if (dateOfRegistration == null) {
             dateOfRegistration = LocalDate.now();
         }
-
     }
 }
