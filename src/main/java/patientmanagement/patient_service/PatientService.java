@@ -2,6 +2,7 @@ package patientmanagement.patient_service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,24 @@ class PatientService {
         var savedPatient = patientRepository.save(patient);
 
         return savedPatient.toResponseDTO();
+    }
+
+    Optional<PatientResponseDTO> updatePatient(String email, PatientRequestDTO updatePatientRequest) {
+        var patientOptional = patientRepository.findByEmail(email);
+        if (patientOptional.isPresent()) {
+            var patient = patientOptional.get();
+            var id = patient.getId();
+            if (!patientRepository.existsByEmailAndIdNot(email, id)) {
+                patient.setEmail(updatePatientRequest.email());
+                patient.setAddress(updatePatientRequest.address());
+            }
+            return Optional.of(patientRepository.save(patient).toResponseDTO());
+        }
+        return Optional.empty();
+    }
+
+    void deletePatient(UUID id) {
+        patientRepository.deleteById(id);
     }
 
 }

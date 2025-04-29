@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -128,6 +129,21 @@ class PatientServiceApplicationTests {
 		assertThat(email).isEqualTo("blue.sayama@example.com");
 		String dor = blueJson.read("$.dateOfRegistration");
 		assertThat(dor).isEqualTo(LocalDate.now().toString());
+	}
+
+	@Test
+	@DirtiesContext
+	void shouldDeleteAnExistingPatientById() {
+		var response = restTemplate
+			.exchange(
+				"/api/v1/patients/123e4567-e89b-12d3-a456-426614174004",
+				HttpMethod.DELETE,
+				null,
+				Void.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+		var getResponse = restTemplate
+			.getForEntity("/api/v1/patients/emily.davis@example.com", String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 }
