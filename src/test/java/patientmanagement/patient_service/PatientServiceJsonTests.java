@@ -115,7 +115,8 @@ class PatientServiceJsonTests {
         assertObject.extractingJsonPathStringValue("@.dateOfBirth").isEqualTo("1992-09-15");
 
         assertObject.hasJsonPathStringValue("@.dateOfRegistration");
-        assertObject.extractingJsonPathStringValue("@.dateOfRegistration").isEqualTo(LocalDate.now().toString());
+        assertObject.extractingJsonPathStringValue("@.dateOfRegistration")
+                .isEqualTo(LocalDate.now().toString());
     }
 
     @Test

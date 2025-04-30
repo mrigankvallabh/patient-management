@@ -4,10 +4,10 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 record PatientResponseDTO(
-                UUID id,
-                String name,
-                String email,
-                String address,
-                LocalDate dateOfBirth,
-                LocalDate dateOfRegistration) {
+        UUID id,
+        String name,
+        String email,
+        String address,
+        LocalDate dateOfBirth,
+        LocalDate dateOfRegistration) {
 }

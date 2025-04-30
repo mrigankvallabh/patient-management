@@ -39,17 +39,15 @@ class PatientService {
     }
 
     Optional<PatientResponseDTO> updatePatient(String email, PatientRequestDTO updatePatientRequest) {
-        var patientOptional = patientRepository.findByEmail(email);
-        if (patientOptional.isPresent()) {
-            var patient = patientOptional.get();
-            var id = patient.getId();
-            if (!patientRepository.existsByEmailAndIdNot(email, id)) {
-                patient.setEmail(updatePatientRequest.email());
-                patient.setAddress(updatePatientRequest.address());
-            }
-            return Optional.of(patientRepository.save(patient).toResponseDTO());
-        }
-        return Optional.empty();
+        return patientRepository
+                .findByEmail(email)
+                .filter(patient -> !patientRepository
+                        .existsByEmailAndIdNot(updatePatientRequest.email(), patient.getId()))
+                .map(patient -> {
+                    patient.setEmail(updatePatientRequest.email());
+                    patient.setAddress(updatePatientRequest.address());
+                    return patientRepository.save(patient).toResponseDTO();
+                });
     }
 
     void deletePatient(UUID id) {

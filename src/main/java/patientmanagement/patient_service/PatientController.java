@@ -56,12 +56,9 @@ class PatientController {
             @PathVariable String email,
             @Validated @RequestBody PatientRequestDTO updatePatientRequest) {
         log.info("Uptate request {}", updatePatientRequest);
-        var optionalPatientResponse = patientService.updatePatient(email, updatePatientRequest);
-        if (optionalPatientResponse.isPresent()) {
-            return ResponseEntity
-                    .ok(optionalPatientResponse.get());
-        }
-        return ResponseEntity.notFound().build();
+        return patientService.updatePatient(email, updatePatientRequest)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{patientId}")
