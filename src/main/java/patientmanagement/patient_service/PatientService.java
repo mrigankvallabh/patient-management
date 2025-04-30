@@ -27,6 +27,9 @@ class PatientService {
     }
 
     PatientResponseDTO createPatient(PatientRequestDTO patientRequestDTO) {
+        if (patientRepository.existsByEmail(patientRequestDTO.email())) {
+            throw new PatientEmailAlreadyExists(patientRequestDTO.email());
+        }
         var patient = new Patient(
                 patientRequestDTO.name(),
                 patientRequestDTO.email(),
@@ -38,16 +41,16 @@ class PatientService {
         return savedPatient.toResponseDTO();
     }
 
-    Optional<PatientResponseDTO> updatePatient(String email, PatientRequestDTO updatePatientRequest) {
-        return patientRepository
-                .findByEmail(email)
-                .filter(patient -> !patientRepository
-                        .existsByEmailAndIdNot(updatePatientRequest.email(), patient.getId()))
-                .map(patient -> {
-                    patient.setEmail(updatePatientRequest.email());
-                    patient.setAddress(updatePatientRequest.address());
-                    return patientRepository.save(patient).toResponseDTO();
-                });
+    PatientResponseDTO updatePatient(String email, PatientRequestDTO updatePatientRequest) {
+        var patient = patientRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new PatientNotFoundException(email));
+        if (patientRepository.existsByEmailAndIdNot(updatePatientRequest.email(), patient.getId())) {
+            throw new PatientEmailAlreadyExists(email);
+        }
+        patient.setEmail(updatePatientRequest.email());
+        patient.setAddress(updatePatientRequest.address());
+        return patientRepository.save(patient).toResponseDTO();
     }
 
     void deletePatient(UUID id) {

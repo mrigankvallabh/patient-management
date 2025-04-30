@@ -56,9 +56,7 @@ class PatientController {
             @PathVariable String email,
             @Validated @RequestBody PatientRequestDTO updatePatientRequest) {
         log.info("Uptate request {}", updatePatientRequest);
-        return patientService.updatePatient(email, updatePatientRequest)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(patientService.updatePatient(email, updatePatientRequest));
     }
 
     @DeleteMapping("/{patientId}")
