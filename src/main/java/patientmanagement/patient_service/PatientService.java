@@ -26,6 +26,10 @@ class PatientService {
         return patientRepository.findByEmail(email).map(Patient::toResponseDTO);
     }
 
+    Optional<PatientResponseDTO> getPatientById(UUID patientId) {
+        return patientRepository.findById(patientId).map(Patient::toResponseDTO);
+    }
+
     PatientResponseDTO createPatient(PatientRequestDTO patientRequestDTO) {
         if (patientRepository.existsByEmail(patientRequestDTO.email())) {
             throw new PatientEmailAlreadyExists(patientRequestDTO.email());
@@ -41,12 +45,12 @@ class PatientService {
         return savedPatient.toResponseDTO();
     }
 
-    PatientResponseDTO updatePatient(String email, PatientRequestDTO updatePatientRequest) {
+    PatientResponseDTO updatePatient(UUID patientId, PatientRequestDTO updatePatientRequest) {
         var patient = patientRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new PatientNotFoundException(email));
+                .findById(patientId)
+                .orElseThrow(() -> new PatientNotFoundException(patientId.toString()));
         if (patientRepository.existsByEmailAndIdNot(updatePatientRequest.email(), patient.getId())) {
-            throw new PatientEmailAlreadyExists(email);
+            throw new PatientEmailAlreadyExists(updatePatientRequest.email());
         }
         patient.setEmail(updatePatientRequest.email());
         patient.setAddress(updatePatientRequest.address());

@@ -26,12 +26,13 @@ import net.minidev.json.JSONArray;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class PatientServiceApplicationTests {
 
+    private static final String API_ROOT_URL = "/api/v1/patients";
     @Autowired
     TestRestTemplate restTemplate;
 
     @Test
     void shouldReturnAllPatientsWhenListIsRequested() {
-        var response = restTemplate.getForEntity("/api/v1/patients", String.class);
+        var response = restTemplate.getForEntity(API_ROOT_URL, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         var documentContext = JsonPath.parse(response.getBody());
         int patientsCount = documentContext.read("$.length()");
@@ -47,7 +48,10 @@ class PatientServiceApplicationTests {
     @Test
     void shouldReturnAnExistingPatientByEmail() {
         String requestEmail = "isabella.walker@example.com";
-        var response = restTemplate.getForEntity("/api/v1/patients/" + requestEmail, String.class);
+        var response = restTemplate
+                .getForEntity(
+                        API_ROOT_URL + "/by-email?email=" + requestEmail,
+                        String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         var isabellaJson = JsonPath.parse(response.getBody());
         String id = isabellaJson.read("$.id");
@@ -67,13 +71,15 @@ class PatientServiceApplicationTests {
     @Test
     void shouldNotReturnAnUnknownPatientByEmail() {
         String requestEmail = "secret.stalker@unknown.com";
-        var response = restTemplate.getForEntity("/api/v1/patients/" + requestEmail, String.class);
+        var response = restTemplate.getForEntity(
+                API_ROOT_URL + "/by-email?email=" + requestEmail, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isBlank();
     }
 
     @Test
     @DirtiesContext
+    @SuppressWarnings("null") // already testing Not NULL response body
     void shouldCreateANewPatient() {
         var newPatientRequest = new PatientRequestDTO(
                 "Blue Sayama",
@@ -82,12 +88,13 @@ class PatientServiceApplicationTests {
                 LocalDate.of(1996, 6, 18),
                 LocalDate.of(2024, 7, 22));
         var createResponse = restTemplate
-                .postForEntity("/api/v1/patients", newPatientRequest, PatientResponseDTO.class);
+                .postForEntity(API_ROOT_URL, newPatientRequest, PatientResponseDTO.class);
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(createResponse.getBody()).isNotNull();
         var locationOfNewPatient = createResponse.getHeaders().getLocation();
         assertThat(locationOfNewPatient)
                 .isNotNull()
-                .hasPath("/api/v1/patients/blue.sayama@example.com");
+                .hasPath(API_ROOT_URL + "/" + createResponse.getBody().id());
 
         var getResponse = restTemplate
                 .getForEntity(locationOfNewPatient, String.class);
@@ -104,6 +111,7 @@ class PatientServiceApplicationTests {
 
     @Test
     @DirtiesContext
+    @SuppressWarnings("null") // already testing Not NULL response body
     void shouldCreateANewPatientWhenRegistrationDateNotProvided() {
         var newPatientRequest = new PatientRequestDTO(
                 "Blue Sayama",
@@ -112,12 +120,13 @@ class PatientServiceApplicationTests {
                 LocalDate.of(1996, 6, 18),
                 null);
         var createResponse = restTemplate
-                .postForEntity("/api/v1/patients", newPatientRequest, PatientResponseDTO.class);
+                .postForEntity(API_ROOT_URL, newPatientRequest, PatientResponseDTO.class);
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(createResponse.getBody()).isNotNull();
         var locationOfNewPatient = createResponse.getHeaders().getLocation();
         assertThat(locationOfNewPatient)
                 .isNotNull()
-                .hasPath("/api/v1/patients/blue.sayama@example.com");
+                .hasPath(API_ROOT_URL + "/" + createResponse.getBody().id());
 
         var getResponse = restTemplate
                 .getForEntity(locationOfNewPatient, String.class);
@@ -132,15 +141,16 @@ class PatientServiceApplicationTests {
         assertThat(dor).isEqualTo(LocalDate.now().toString());
     }
 
-    @SuppressWarnings("null")
     @Test
+    @SuppressWarnings("null") // already testing Not NULL response body
     void shouldUpdateAnExistingPatient() {
-        // Ensure that emily.davis@example.com is present in test/resources/data.sql
         var emilyDavis = restTemplate
                 .getForEntity(
-                        "/api/v1/patients/emily.davis@example.com",
+                        API_ROOT_URL + "/by-email?email=emily.davis@example.com",
                         PatientResponseDTO.class)
                 .getBody();
+
+        // Ensure that emily.davis@example.com exists in test/resources/data.sql
         assertThat(emilyDavis).isNotNull();
         var updatePatientRequest = new PatientRequestDTO(
                 "Emily David",
@@ -151,14 +161,14 @@ class PatientServiceApplicationTests {
         var request = new HttpEntity<>(updatePatientRequest);
         var response = restTemplate
                 .exchange(
-                        "/api/v1/patients/emily.davis@example.com",
+                        API_ROOT_URL + "/" + emilyDavis.id(),
                         HttpMethod.PUT,
                         request,
                         PatientResponseDTO.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         var getResponseAfter = restTemplate
-                .getForEntity("/api/v1/patients/emily.david@example.com", String.class);
+                .getForEntity(API_ROOT_URL + "/" + emilyDavis.id(), String.class);
         assertThat(getResponseAfter.getStatusCode()).isEqualTo(HttpStatus.OK);
         var documentContext = JsonPath.parse(getResponseAfter.getBody());
         String address = documentContext.read("$.address");
@@ -174,18 +184,28 @@ class PatientServiceApplicationTests {
 
     @Test
     @DirtiesContext
+    @SuppressWarnings("null")
     void shouldDeleteAnExistingPatientById() {
-        // Ensure that emily.davis@example.com with below id is present in
-        // test/resources/data.sql
+        var emilyDavis = restTemplate
+                .getForEntity(
+                        API_ROOT_URL + "/by-email?email=emily.davis@example.com",
+                        PatientResponseDTO.class)
+                .getBody();
+
+        // Ensure that emily.davis@example.com exists in test/resources/data.sql
+        assertThat(emilyDavis).isNotNull();
+
         var response = restTemplate
                 .exchange(
-                        "/api/v1/patients/123e4567-e89b-12d3-a456-426614174004",
+                        API_ROOT_URL + "/" + emilyDavis.id(),
                         HttpMethod.DELETE,
                         null,
                         Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         var getResponse = restTemplate
-                .getForEntity("/api/v1/patients/emily.davis@example.com", String.class);
+                .getForEntity(
+                        API_ROOT_URL + "/by-email?email=emily.davis@example.com",
+                        String.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 

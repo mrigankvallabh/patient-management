@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import jakarta.validation.constraints.Email;
 
 @RestController
 @RequestMapping("/api/v1/patients")
@@ -32,13 +35,20 @@ class PatientController {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
-    @GetMapping("/{email}")
-    private ResponseEntity<PatientResponseDTO> getPatientByEmail(@PathVariable String email) {
-        var patient = patientService.getPatientByEmail(email);
-        if (patient.isPresent()) {
-            return ResponseEntity.ok(patient.get());
-        }
-        return ResponseEntity.notFound().build();
+    @GetMapping("/by-email")
+    private ResponseEntity<PatientResponseDTO> getPatientByEmail(@RequestParam @Email String email) {
+        return patientService
+                .getPatientByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{patientId}")
+    private ResponseEntity<PatientResponseDTO> getPatientById(@PathVariable UUID patientId) {
+        return patientService
+                .getPatientById(patientId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -47,16 +57,19 @@ class PatientController {
             UriComponentsBuilder ucb) {
         log.info("Creating a new patient with email: {}", patientRequestDTO.email());
         var patient = patientService.createPatient(patientRequestDTO);
-        var location = ucb.path("/api/v1/patients/{email}").buildAndExpand(patient.email()).toUri();
+        var location = ucb
+                .path("/api/v1/patients/{patientId}")
+                .buildAndExpand(patient.id())
+                .toUri();
         return ResponseEntity.created(location).body(patient);
     }
 
-    @PutMapping("/{email}")
+    @PutMapping("/{patientId}")
     public ResponseEntity<PatientResponseDTO> updatePatient(
-            @PathVariable String email,
+            @PathVariable UUID patientId,
             @Validated @RequestBody PatientRequestDTO updatePatientRequest) {
         log.info("Uptate request {}", updatePatientRequest);
-        return ResponseEntity.ok(patientService.updatePatient(email, updatePatientRequest));
+        return ResponseEntity.ok(patientService.updatePatient(patientId, updatePatientRequest));
     }
 
     @DeleteMapping("/{patientId}")
