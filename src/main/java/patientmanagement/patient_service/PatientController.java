@@ -18,10 +18,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Email;
 
 @RestController
 @RequestMapping("/api/v1/patients")
+@Tag(name = "Patient", description = "Patient Management API")
 class PatientController {
     private static final Logger log = LoggerFactory.getLogger(PatientController.class);
     private final PatientService patientService;
@@ -31,11 +34,13 @@ class PatientController {
     }
 
     @GetMapping
+    @Operation(summary = "Get All Patients")
     private ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
     @GetMapping("/by-email")
+    @Operation(summary = "Get a Patient by Email")
     private ResponseEntity<PatientResponseDTO> getPatientByEmail(@RequestParam @Email String email) {
         return patientService
                 .getPatientByEmail(email)
@@ -44,6 +49,7 @@ class PatientController {
     }
 
     @GetMapping("/{patientId}")
+    @Operation(summary = "Get a Patient by Id")
     private ResponseEntity<PatientResponseDTO> getPatientById(@PathVariable UUID patientId) {
         return patientService
                 .getPatientById(patientId)
@@ -52,6 +58,7 @@ class PatientController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a new Patient")
     private ResponseEntity<PatientResponseDTO> createPatient(
             @RequestBody @Validated PatientRequestDTO patientRequestDTO,
             UriComponentsBuilder ucb) {
@@ -65,6 +72,7 @@ class PatientController {
     }
 
     @PutMapping("/{patientId}")
+    @Operation(summary = "Update a Patient")
     public ResponseEntity<PatientResponseDTO> updatePatient(
             @PathVariable UUID patientId,
             @Validated @RequestBody PatientRequestDTO updatePatientRequest) {
@@ -73,6 +81,7 @@ class PatientController {
     }
 
     @DeleteMapping("/{patientId}")
+    @Operation(summary = "Delete a Patient")
     private ResponseEntity<Void> deletePatient(@PathVariable UUID patientId) {
         patientService.deletePatient(patientId);
         return ResponseEntity.noContent().build();
