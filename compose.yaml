@@ -8,3 +8,8 @@ services:
       - 'POSTGRES_USER=myuser'
     ports:
       - '65432:5432'
+    volumes:
+      - patients_data:/var/lib/postgresql/data
+
+volumes:
+  patients_data:
